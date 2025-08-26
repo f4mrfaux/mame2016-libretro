@@ -88,6 +88,7 @@ bool nobuffer_enable = false;
 
 bool hide_gameinfo = false;
 bool mouse_enable = false;
+bool mouse_absolute_mode = false;
 bool cheats_enable = false;
 bool alternate_renderer = false;
 bool boot_to_osd_enable = false;
@@ -406,12 +407,59 @@ void process_mouse_state(void)
    if (!mouse_enable)
       return;
 
-   mouse_x = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
-   mouse_y = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
-   mouse_l = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
-   mouse_r = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT);
-   mouseLX = mouse_x*INPUT_RELATIVE_PER_PIXEL;;
-   mouseLY = mouse_y*INPUT_RELATIVE_PER_PIXEL;;
+   if (mouse_absolute_mode) {
+      /* Absolute mode - direct S-Pen positioning for MAME */
+      if (input_state_cb(0, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_PRESSED)) {
+         /* Get pointer coordinates and scale to MAME's absolute range */
+         int16_t pointer_x = input_state_cb(0, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X);
+         int16_t pointer_y = input_state_cb(0, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y);
+         
+         /* Transform libretro range (-32768..32767) to MAME absolute range (-65536..65536) */
+         mouseLX = (int)pointer_x * 2; /* Scale to MAME's expected absolute range */
+         mouseLY = (int)pointer_y * 2;
+      }
+      /* Handle S-Pen button mapping with configurable actions - preserves legacy finger touch support */
+      bool tap_detected = input_state_cb(0, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_PRESSED);
+      bool barrel_detected = false; /* TODO: Add barrel button detection from Android system */
+      
+      /* Start with legacy mouse button states */
+      mouse_l = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
+      mouse_r = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT);
+      
+      /* Legacy finger touch support - always preserved */
+      if (tap_detected) {
+         mouse_l = true; /* Default finger touch = left click */
+      }
+      
+      /* S-Pen enhancement - add configurable mapping on top of legacy */
+      if (tap_detected && spen_tap_action != SPEN_ACTION_DISABLED) {
+         switch (spen_tap_action) {
+            case SPEN_ACTION_LEFT_CLICK:   mouse_l = true; break;
+            case SPEN_ACTION_RIGHT_CLICK:  mouse_r = true; break;
+            case SPEN_ACTION_MIDDLE_CLICK: /* TODO: Add middle click support if MAME supports it */ break;
+            case SPEN_ACTION_TRIGGER:      mouse_l = true; break; /* Trigger maps to left click in MAME */
+            case SPEN_ACTION_RELOAD:       /* TODO: Add reload mapping if applicable */ break;
+         }
+      }
+      
+      if (barrel_detected && spen_barrel_action != SPEN_ACTION_DISABLED) {
+         switch (spen_barrel_action) {
+            case SPEN_ACTION_LEFT_CLICK:   mouse_l = true; break;
+            case SPEN_ACTION_RIGHT_CLICK:  mouse_r = true; break;
+            case SPEN_ACTION_MIDDLE_CLICK: /* TODO: Add middle click support if MAME supports it */ break;
+            case SPEN_ACTION_TRIGGER:      mouse_l = true; break; /* Trigger maps to left click in MAME */
+            case SPEN_ACTION_RELOAD:       /* TODO: Add reload mapping if applicable */ break;
+         }
+      }
+   } else {
+      /* Relative mouse mode (existing behavior) */
+      mouse_x = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
+      mouse_y = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+      mouse_l = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
+      mouse_r = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT);
+      mouseLX = mouse_x*INPUT_RELATIVE_PER_PIXEL;
+      mouseLY = mouse_y*INPUT_RELATIVE_PER_PIXEL;
+   }
 
    if(mbL==0 && mouse_l)
    {
