@@ -1,4 +1,4 @@
-
+“Experimental work on adding RETRO_POINTER & Samsung S-Pen support for libretro cores”
 # **MAME** #
 
 [![Join the chat at https://gitter.im/mamedev/mame](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mamedev/mame?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
