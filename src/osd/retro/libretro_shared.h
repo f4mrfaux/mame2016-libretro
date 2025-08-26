@@ -31,6 +31,7 @@ extern int retro_pause;
 extern bool experimental_cmdline;
 extern bool hide_gameinfo;
 extern bool mouse_enable;
+extern bool mouse_absolute_mode;
 extern bool cheats_enable;
 extern bool alternate_renderer;
 extern bool boot_to_osd_enable;
@@ -44,6 +45,18 @@ extern bool hide_warnings;
 extern bool throttle_enable;
 extern bool auto_save_enable;
 extern bool game_specific_saves_enable;
+
+/* S-Pen action definitions */
+#define SPEN_ACTION_DISABLED      0
+#define SPEN_ACTION_LEFT_CLICK    1
+#define SPEN_ACTION_RIGHT_CLICK   2
+#define SPEN_ACTION_MIDDLE_CLICK  3
+#define SPEN_ACTION_TRIGGER       4
+#define SPEN_ACTION_RELOAD        5
+
+/* S-Pen configuration variables */
+extern int spen_tap_action;
+extern int spen_barrel_action;
 
 extern int mouseLX;
 extern int mouseLY;

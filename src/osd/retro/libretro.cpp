@@ -36,6 +36,7 @@ int NEWGAME_FROM_OSD  = 0;
 char RPATH[512];
 
 static char option_mouse[50];
+static char option_mouse_mode[50];
 static char option_cheats[50];
 static char option_overclock[50];
 static char option_nag[50];
@@ -56,6 +57,10 @@ static char option_nobuffer[50];
 static char option_saves[50];
 
 static int cpu_overclock = 100;
+
+/* S-Pen configuration variables */
+int spen_tap_action = SPEN_ACTION_LEFT_CLICK;
+int spen_barrel_action = SPEN_ACTION_RIGHT_CLICK;
 
 const char *retro_save_directory;
 const char *retro_system_directory;
@@ -134,6 +139,7 @@ void retro_set_audio_sample(retro_audio_sample_t cb) { }
 void retro_set_environment(retro_environment_t cb)
 {
    sprintf(option_mouse, "%s_%s", core, "mouse_enable");
+   sprintf(option_mouse_mode, "%s_%s", core, "mouse_mode");
    sprintf(option_cheats, "%s_%s", core, "cheats_enable");
    sprintf(option_overclock, "%s_%s", core, "cpu_overclock");
    sprintf(option_nag, "%s_%s",core,"hide_nagscreen");
@@ -163,6 +169,9 @@ void retro_set_environment(retro_environment_t cb)
     { option_saves, "Save state naming; game|system" },
     { option_auto_save, "Auto save/load states; disabled|enabled" },
     { option_mouse, "Enable in-game mouse; disabled|enabled" },
+    { option_mouse_mode, "Mouse input mode; relative|absolute" },
+    { "mame2016_spen_tap_action", "S-Pen Tap Action; left_click|right_click|middle_click|trigger|reload|disabled" },
+    { "mame2016_spen_barrel_action", "S-Pen Barrel Action; right_click|left_click|middle_click|trigger|reload|disabled" },
     { option_throttle, "Enable throttle; disabled|enabled" },
     { option_cheats, "Enable cheats; disabled|enabled" },
     { option_overclock, "Main CPU Overclock; default|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|60|65|70|75|80|85|90|95|100|105|110|115|120|125|130|135|140|145|150" },
@@ -216,6 +225,57 @@ static void check_variables(void)
          mouse_enable = false;
       if (!strcmp(var.value, "enabled"))
          mouse_enable = true;
+   }
+
+   var.key   = option_mouse_mode;
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp(var.value, "absolute"))
+         mouse_absolute_mode = true;
+      else
+         mouse_absolute_mode = false;
+   }
+
+   /* Parse S-Pen tap action */
+   var.key   = "mame2016_spen_tap_action";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp(var.value, "left_click"))
+         spen_tap_action = SPEN_ACTION_LEFT_CLICK;
+      else if (!strcmp(var.value, "right_click"))
+         spen_tap_action = SPEN_ACTION_RIGHT_CLICK;
+      else if (!strcmp(var.value, "middle_click"))
+         spen_tap_action = SPEN_ACTION_MIDDLE_CLICK;
+      else if (!strcmp(var.value, "trigger"))
+         spen_tap_action = SPEN_ACTION_TRIGGER;
+      else if (!strcmp(var.value, "reload"))
+         spen_tap_action = SPEN_ACTION_RELOAD;
+      else if (!strcmp(var.value, "disabled"))
+         spen_tap_action = SPEN_ACTION_DISABLED;
+   }
+
+   /* Parse S-Pen barrel action */
+   var.key   = "mame2016_spen_barrel_action";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (!strcmp(var.value, "left_click"))
+         spen_barrel_action = SPEN_ACTION_LEFT_CLICK;
+      else if (!strcmp(var.value, "right_click"))
+         spen_barrel_action = SPEN_ACTION_RIGHT_CLICK;
+      else if (!strcmp(var.value, "middle_click"))
+         spen_barrel_action = SPEN_ACTION_MIDDLE_CLICK;
+      else if (!strcmp(var.value, "trigger"))
+         spen_barrel_action = SPEN_ACTION_TRIGGER;
+      else if (!strcmp(var.value, "reload"))
+         spen_barrel_action = SPEN_ACTION_RELOAD;
+      else if (!strcmp(var.value, "disabled"))
+         spen_barrel_action = SPEN_ACTION_DISABLED;
    }
 
    var.key   = option_throttle;
