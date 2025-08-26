@@ -409,18 +409,20 @@ void process_mouse_state(void)
 
    if (mouse_absolute_mode) {
       /* Absolute mode - direct S-Pen positioning for MAME */
-      if (input_state_cb(0, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_PRESSED)) {
-         /* Get pointer coordinates and scale to MAME's absolute range */
-         int16_t pointer_x = input_state_cb(0, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X);
-         int16_t pointer_y = input_state_cb(0, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y);
-         
-         /* Transform libretro range (-32768..32767) to MAME absolute range (-65536..65536) */
-         mouseLX = (int)pointer_x * 2; /* Scale to MAME's expected absolute range */
-         mouseLY = (int)pointer_y * 2;
-      }
+      /* Always poll coordinates to support hover cursor movement and side button detection */
+      int16_t pointer_x = input_state_cb(0, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X);
+      int16_t pointer_y = input_state_cb(0, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y);
+      bool pointer_pressed = input_state_cb(0, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_PRESSED);
+      
+      /* Transform libretro range (-32768..32767) to MAME absolute range (-65536..65536) */
+      mouseLX = (int)pointer_x * 2; /* Scale to MAME's expected absolute range */
+      mouseLY = (int)pointer_y * 2;
+      
       /* Handle S-Pen button mapping with configurable actions - preserves legacy finger touch support */
-      bool tap_detected = input_state_cb(0, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_PRESSED);
-      bool barrel_detected = false; /* TODO: Add barrel button detection from Android system */
+      bool tap_detected = pointer_pressed;
+      /* Side button detection via pointer count - RetroArch exposes side button as additional pointer */
+      int pointer_count = input_state_cb(0, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_COUNT);
+      bool barrel_detected = (pointer_count > 1); /* Side button creates additional pointer */
       
       /* Start with legacy mouse button states */
       mouse_l = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
